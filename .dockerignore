@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+bun.lockb
+
+# Build outputs
+.next
+dist
+build
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Environment files (use docker-compose env vars instead)
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+Thumbs.db
+*.pem
+
+# Database (for local dev, keep in production)
+*.db
+*.sqlite
+
+# Kiloside
+.kilocode
