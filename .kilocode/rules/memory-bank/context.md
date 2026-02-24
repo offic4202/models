@@ -1,10 +1,10 @@
-# Active Context: StreamRay Models Website
+# Active Context: StreamRay Admin Platform
 
 ## Current State
 
-**Project Status**: ✅ Complete - StreamRay Models website replica
+**Project Status**: ✅ Complete - Admin platform with role-based dashboards
 
-The website is a replica of models.streamray.com featuring a professional modeling agency design with dark theme.
+A full-featured admin platform for managing models, studios, and content with role-based access control.
 
 ## Recently Completed
 
@@ -14,14 +14,17 @@ The website is a replica of models.streamray.com featuring a professional modeli
 - [x] ESLint configuration
 - [x] Memory bank documentation
 - [x] Recipe system for common features
-- [x] **StreamRay Models website replica**
-  - Header with navigation
-  - Hero section with full-screen background
-  - Models grid with 8 model cards
-  - Stats section
-  - Footer with contact info
-  - Responsive design
-  - External images from Unsplash configured
+- [x] **StreamRay Models website replica** (previous version)
+- [x] **Admin Platform**
+  - Database schema with Drizzle ORM (SQLite)
+  - Authentication system with token-based auth
+  - Role-based access control (super_admin, studio_owner, model, fan)
+  - Super Admin panel (/admin) - approve/reject studios, models, content
+  - Studio Owner dashboard (/studio) - manage models
+  - Model dashboard (/model) - manage content, view fans, track earnings
+  - Login page with registration
+  - API routes for all functionality
+  - Docker configuration for deployment
 
 ## Current Structure
 
@@ -30,28 +33,51 @@ The website is a replica of models.streamray.com featuring a professional modeli
 | `src/app/page.tsx` | Home page with models roster | ✅ Complete |
 | `src/app/layout.tsx` | Root layout + metadata | ✅ Complete |
 | `src/app/globals.css` | Global styles + animations | ✅ Complete |
-| `next.config.ts` | Image domains config | ✅ Complete |
+| `src/app/login/page.tsx` | Login/Register page | ✅ Complete |
+| `src/app/admin/page.tsx` | Super Admin panel | ✅ Complete |
+| `src/app/studio/page.tsx` | Studio Owner dashboard | ✅ Complete |
+| `src/app/model/page.tsx` | Model dashboard | ✅ Complete |
+| `src/db/schema.ts` | Database schema | ✅ Complete |
+| `src/lib/auth.ts` | Authentication utilities | ✅ Complete |
+| `src/app/api/auth/` | Auth API routes | ✅ Complete |
+| `src/app/api/admin/` | Admin API routes | ✅ Complete |
+| `src/app/api/studio/` | Studio API routes | ✅ Complete |
+| `src/app/api/model/` | Model API routes | ✅ Complete |
+| `Dockerfile` | Docker build config | ✅ Complete |
+| `docker-compose.yml` | Docker Compose for Coolify | ✅ Complete |
+| `.env.example` | Environment variables | ✅ Complete |
+| `next.config.ts` | Next.js config with standalone output | ✅ Complete |
 | `.kilocode/` | AI context & recipes | ✅ Ready |
 
 ## Current Focus
 
-The StreamRay Models website replica is complete with:
-- Dark, elegant design similar to modeling agency websites
-- Full-screen hero section with call-to-action
-- Responsive models grid (1/2/4 columns)
-- Stats section
-- Professional footer with contact information
+The admin platform is complete with:
+- **Super Admin**: Approve/reject studios, models, and content
+- **Studio Owner**: Manage models in their studio
+- **Model**: Create content, view followers, track earnings
+- **Fan**: Register and follow models (basic)
 
 ## Quick Start Guide
 
 ### To view the website:
 The dev server should be running. Open http://localhost:3000
 
-### To add a new page:
-Create a file at `src/app/[route]/page.tsx`
+### Login/Registration:
+- Go to /login to register or login
+- Choose role: Fan, Model, Studio Owner, or Super Admin
 
-### To modify the models:
-Edit the `models` array in `src/app/page.tsx`
+### Dashboards:
+- `/admin` - Super Admin (approve content, manage users)
+- `/studio` - Studio Owner (manage models)
+- `/model` - Model (create content, view fans, earnings)
+
+### Docker Deployment:
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# For Coolify, just deploy the docker-compose.yml
+```
 
 ## Available Recipes
 
@@ -65,3 +91,4 @@ Edit the `models` array in `src/app/page.tsx`
 |------|---------|
 | Initial | Template created with base setup |
 | 2024 | StreamRay Models website replica - hero, models grid, footer |
+| 2024 | Admin platform - auth, dashboards, Docker deployment |
