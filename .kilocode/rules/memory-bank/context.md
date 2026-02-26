@@ -25,6 +25,7 @@ A full-featured admin platform for managing models, studios, and content with ro
   - Login page with registration
   - API routes for all functionality
   - Docker configuration for deployment
+- [x] **Build Fix**: Lazy database initialization to prevent build failures when DB_URL/DB_TOKEN aren't set during build (Cloudflare deployment)
 
 ## Current Structure
 
@@ -92,3 +93,4 @@ docker-compose up -d
 | Initial | Template created with base setup |
 | 2024 | StreamRay Models website replica - hero, models grid, footer |
 | 2024 | Admin platform - auth, dashboards, Docker deployment |
+| 2026-02 | Fixed build failure - lazy database initialization for Cloudflare deployment |
