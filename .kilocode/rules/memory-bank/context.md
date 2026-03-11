@@ -31,6 +31,7 @@ A full-featured admin platform for managing models, studios, and content with ro
 - [x] **Model Settings**: Content types enabled, pricing, visibility, tips configuration
 - [x] **Studio Model Settings**: Revenue share, permissions per model
 - [x] **Email/SMTP Support**: Configurable SMTP with welcome emails, approval notifications, content notifications
+- [x] **Database Fix**: Fixed database initialization - tables now properly created on startup
 
 ## Current Structure
 
