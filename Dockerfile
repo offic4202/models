@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Set build-time environment variable
 ENV DB_URL=file:/app/data/streamray.db
+ENV DB_TOKEN=local-dev-token
 
 # Copy package files
 COPY package.json bun.lock ./
