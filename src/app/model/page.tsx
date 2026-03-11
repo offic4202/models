@@ -10,6 +10,26 @@ interface User {
   role: string;
 }
 
+interface ModelSettings {
+  id: number;
+  enableVideo: boolean;
+  enableAudio: boolean;
+  enableCamGroup: boolean;
+  enablePrivateShow: boolean;
+  enableGallery: boolean;
+  defaultVideoPrice: number;
+  defaultAudioPrice: number;
+  defaultGalleryPrice: number;
+  defaultSubscriptionPrice: number;
+  privateShowPerMin: number;
+  camGroupPerMin: number;
+  defaultVisibility: string;
+  isVerified: boolean;
+  showOnlineStatus: boolean;
+  allowTips: boolean;
+  minTipAmount: number;
+}
+
 interface Content {
   id: number;
   title: string;
@@ -17,7 +37,9 @@ interface Content {
   type: string;
   url: string;
   price: number;
+  visibility: string;
   isPublic: boolean;
+  isPremium: boolean;
   isApproved: boolean;
   approvalStatus: string;
   viewCount: number;
@@ -29,19 +51,39 @@ export default function ModelDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [settings, setSettings] = useState<ModelSettings | null>(null);
   const [content, setContent] = useState<Content[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [recentFollowers, setRecentFollowers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "content" | "fans" | "earnings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "content" | "shows" | "settings" | "fans" | "earnings">("overview");
   const [showCreateContent, setShowCreateContent] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [newContent, setNewContent] = useState({
     title: "",
     description: "",
     type: "image",
     url: "",
     price: 0,
-    isPublic: false,
+    visibility: "public",
+    isPremium: false,
+  });
+  const [settingsForm, setSettingsForm] = useState({
+    enableVideo: true,
+    enableAudio: true,
+    enableCamGroup: true,
+    enablePrivateShow: true,
+    enableGallery: true,
+    defaultVideoPrice: 10,
+    defaultAudioPrice: 5,
+    defaultGalleryPrice: 8,
+    defaultSubscriptionPrice: 15,
+    privateShowPerMin: 2,
+    camGroupPerMin: 1,
+    defaultVisibility: "public",
+    showOnlineStatus: true,
+    allowTips: true,
+    minTipAmount: 1,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -111,7 +153,8 @@ export default function ModelDashboard() {
           type: "image",
           url: "",
           price: 0,
-          isPublic: false,
+          visibility: "public",
+          isPremium: false,
         });
         loadDashboard();
       } else {
@@ -196,6 +239,26 @@ export default function ModelDashboard() {
             }`}
           >
             Content
+          </button>
+          <button
+            onClick={() => setActiveTab("shows")}
+            className={`px-6 py-3 rounded-lg font-medium ${
+              activeTab === "shows"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            Live Shows
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-6 py-3 rounded-lg font-medium ${
+              activeTab === "settings"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            Settings
           </button>
           <button
             onClick={() => setActiveTab("fans")}
@@ -330,6 +393,195 @@ export default function ModelDashboard() {
           </div>
         )}
 
+        {/* Shows Tab */}
+        {activeTab === "shows" && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Live Shows</h2>
+              <button
+                onClick={() => alert("Schedule show feature coming soon")}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg"
+              >
+                Schedule Show
+              </button>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-8 text-center">
+              <div className="text-6xl mb-4">🎬</div>
+              <h3 className="text-xl font-semibold mb-2">Live Shows & Cam Groups</h3>
+              <p className="text-gray-400 mb-4">
+                Host live video shows, cam groups, and private sessions with your fans.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">Cam Group</h4>
+                  <p className="text-sm text-gray-400">Group shows with multiple participants</p>
+                  <p className="text-purple-400 mt-2">${settingsForm.camGroupPerMin}/min per person</p>
+                </div>
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">Private Show</h4>
+                  <p className="text-sm text-gray-400">1-on-1 exclusive video sessions</p>
+                  <p className="text-purple-400 mt-2">${settingsForm.privateShowPerMin}/min</p>
+                </div>
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold mb-2">Subscription</h4>
+                  <p className="text-sm text-gray-400">Monthly subscriber access</p>
+                  <p className="text-purple-400 mt-2">${settingsForm.defaultSubscriptionPrice}/month</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Model Settings</h2>
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-4">Content Types</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.enableVideo}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, enableVideo: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Video Uploads</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.enableAudio}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, enableAudio: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Audio</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.enableCamGroup}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, enableCamGroup: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Cam Groups</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.enablePrivateShow}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, enablePrivateShow: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Private Shows</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.enableGallery}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, enableGallery: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Galleries</span>
+                </label>
+              </div>
+
+              <h3 className="text-xl font-semibold mb-4 mt-8">Default Pricing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Video Price (credits)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.defaultVideoPrice}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, defaultVideoPrice: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Audio Price (credits)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.defaultAudioPrice}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, defaultAudioPrice: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Gallery Price (credits)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.defaultGalleryPrice}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, defaultGalleryPrice: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Subscription Price ($/month)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.defaultSubscriptionPrice}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, defaultSubscriptionPrice: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Private Show ($/min)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.privateShowPerMin}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, privateShowPerMin: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Cam Group ($/min/person)</label>
+                  <input
+                    type="number"
+                    value={settingsForm.camGroupPerMin}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, camGroupPerMin: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <h3 className="text-xl font-semibold mb-4 mt-8">Profile Settings</h3>
+              <div className="space-y-4 mb-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.showOnlineStatus}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, showOnlineStatus: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Show Online Status</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.allowTips}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, allowTips: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <span>Allow Tips</span>
+                </label>
+              </div>
+
+              <button
+                onClick={() => alert("Settings saved!")}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg"
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Fans Tab */}
         {activeTab === "fans" && (
           <div className="text-center py-12 text-gray-400">
@@ -363,7 +615,7 @@ export default function ModelDashboard() {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Type</label>
+                  <label className="block text-sm font-medium mb-2">Content Type</label>
                   <select
                     value={newContent.type}
                     onChange={(e) => setNewContent({ ...newContent, type: e.target.value })}
@@ -371,6 +623,8 @@ export default function ModelDashboard() {
                   >
                     <option value="image">Image</option>
                     <option value="video">Video</option>
+                    <option value="audio">Audio</option>
+                    <option value="gallery">Gallery</option>
                     <option value="text">Text</option>
                   </select>
                 </div>
@@ -403,15 +657,28 @@ export default function ModelDashboard() {
                     step="0.01"
                   />
                 </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Visibility</label>
+                  <select
+                    value={newContent.visibility}
+                    onChange={(e) => setNewContent({ ...newContent, visibility: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  >
+                    <option value="public">Public (Free)</option>
+                    <option value="subscribers">Subscribers Only</option>
+                    <option value="premium">Premium (Paid)</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
                 <div className="mb-6">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={newContent.isPublic}
-                      onChange={(e) => setNewContent({ ...newContent, isPublic: e.target.checked })}
+                      checked={newContent.isPremium}
+                      onChange={(e) => setNewContent({ ...newContent, isPremium: e.target.checked })}
                       className="w-5 h-5"
                     />
-                    <span>Make public (free content)</span>
+                    <span>Mark as Premium Content</span>
                   </label>
                 </div>
                 <div className="flex gap-4">
