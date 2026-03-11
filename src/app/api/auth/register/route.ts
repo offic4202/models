@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUser, generateToken, authenticateUser } from "@/lib/auth";
+import { sendWelcomeEmail, sendNewRegistrationNotification, isEmailConfigured } from "@/lib/email";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -51,6 +52,21 @@ export async function POST(request: NextRequest) {
     }
 
     const token = generateToken(user.id);
+
+    // Send welcome email (async - don't wait)
+    sendWelcomeEmail(email, name, role).catch(console.error);
+
+    // Notify super admins of new registration (if not fan or already verified)
+    if (role !== "fan") {
+      const admins = await db
+        .select()
+        .from(users)
+        .where(eq(users.role, "super_admin"));
+      
+      for (const admin of admins) {
+        sendNewRegistrationNotification(admin.email, name, email, role).catch(console.error);
+      }
+    }
 
     return NextResponse.json({
       token,
