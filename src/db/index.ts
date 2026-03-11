@@ -7,7 +7,15 @@ let dbInstance: ReturnType<typeof createDatabase> | null = null;
 // This prevents build failures when DB_URL/DB_TOKEN aren't set during build
 export function getDb() {
   if (!dbInstance) {
-    dbInstance = createDatabase(schema);
+    const dbUrl = process.env.DB_URL || "file:./data/streamray.db";
+    console.log("Initializing database with URL:", dbUrl);
+    
+    // Create database with schema
+    dbInstance = createDatabase(schema, {
+      url: dbUrl,
+    });
+    
+    console.log("Database initialized successfully");
   }
   return dbInstance;
 }
