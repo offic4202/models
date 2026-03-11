@@ -3,10 +3,6 @@ FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Set build-time environment variable
-ENV DB_URL=file:/app/data/streamray.db
-ENV DB_TOKEN=local-dev-token
-
 # Copy package files
 COPY package.json bun.lock ./
 
@@ -15,9 +11,6 @@ RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
-
-# Create data directory and run migrations
-RUN mkdir -p data && bun run db:migrate
 
 # Build the application
 RUN bun run build
@@ -48,8 +41,8 @@ ENV PORT=3000
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["bun", "run", "start"]
+# Start the application - run migrations first, then start
+CMD ["sh", "-c", "bun run db:migrate && bun run start"]
 
 # Switch to non-root user
 USER nextjs
