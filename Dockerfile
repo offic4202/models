@@ -23,7 +23,7 @@ WORKDIR /app
 # Create non-root user and directories
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-RUN mkdir -p data logs
+RUN mkdir -p data logs && chown -R nextjs:nodejs data logs
 
 # Copy built application
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -40,6 +40,9 @@ ENV PORT=3000
 
 # Expose port
 EXPOSE 3000
+
+# Start the application
+CMD ["bun", "run", "start"]
 
 # Switch to non-root user
 USER nextjs

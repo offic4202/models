@@ -7,12 +7,24 @@ let dbInstance: ReturnType<typeof createDatabase> | null = null;
 // This prevents build failures when DB_URL/DB_TOKEN aren't set during build
 export function getDb() {
   if (!dbInstance) {
-    const dbUrl = process.env.DB_URL || "file:./data/streamray.db";
-    console.log("Initializing database with URL:", dbUrl);
+    // Use absolute path for Docker
+    const dbUrl = process.env.DB_URL || process.env.DATABASE_URL || "file:./data/streamray.db";
+    
+    // Convert relative path to absolute path if needed
+    let finalUrl = dbUrl;
+    if (dbUrl.startsWith("file:")) {
+      const filePath = dbUrl.replace("file:", "");
+      if (!filePath.startsWith("/")) {
+        // Relative path - make it absolute to /app/data
+        finalUrl = `file:/app/data/streamray.db`;
+      }
+    }
+    
+    console.log("Initializing database with URL:", finalUrl);
     
     // Create database with schema
     dbInstance = createDatabase(schema, {
-      url: dbUrl,
+      url: finalUrl,
     });
     
     console.log("Database initialized successfully");

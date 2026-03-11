@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DB_URL=${DB_URL:-file:./data/streamray.db}
+      - DB_URL=file:/app/data/streamray.db
       - DB_TOKEN=${DB_TOKEN:-}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       # SMTP Configuration (optional - emails will be logged if not set)
