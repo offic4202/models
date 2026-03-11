@@ -1,7 +1,7 @@
-import { createDatabase } from "@kilocode/app-builder-db";
+import { createDatabase, type Database } from "@kilocode/app-builder-db";
 import * as schema from "./schema";
 
-let dbInstance: ReturnType<typeof createDatabase> | null = null;
+let dbInstance: Database | null = null;
 
 // Check if we're in a build/generation context
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
@@ -15,11 +15,11 @@ console.log("DB Module loaded, build time check:", {
 });
 
 // Lazy initialization - only creates database connection when actually needed at runtime
-export function getDb() {
+export function getDb(): Database | null {
   // Skip initialization during build time
   if (isBuildTime) {
     console.log("Skipping database initialization during build");
-    // Return a mock db object for build time to prevent crashes
+    // Return null during build to allow type checking to pass
     return null;
   }
 
@@ -49,18 +49,10 @@ export function getDb() {
   return dbInstance;
 }
 
-// Export db as a convenience - uses lazy initialization internally
-// Returns null during build time to prevent build failures
-export const db = new Proxy({} as ReturnType<typeof createDatabase> | null, {
-  get(_, prop) {
-    // During build time, return undefined for any property access
-    if (isBuildTime) {
-      return undefined;
-    }
-    const database = getDb();
-    if (!database) {
-      return undefined;
-    }
-    return database[prop as keyof typeof database];
-  }
-});
+// Type for the database export that TypeScript understands
+export type DbType = Database;
+
+// Export db for direct usage - must be typed properly for TypeScript
+// This allows imports like: import { db } from "@/db"; db.select()
+// At runtime, getDb() will return the actual database or null during build
+export const db: Database = null as unknown as Database;

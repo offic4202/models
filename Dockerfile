@@ -3,6 +3,9 @@ FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
+# Set build-time environment variable
+ENV DB_URL=file:/app/data/streamray.db
+
 # Copy package files
 COPY package.json bun.lock ./
 
@@ -11,6 +14,9 @@ RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
+
+# Create data directory and run migrations
+RUN mkdir -p data && bun run db:migrate
 
 # Build the application
 RUN bun run build

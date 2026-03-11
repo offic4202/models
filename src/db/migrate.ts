@@ -1,5 +1,6 @@
-import { runMigrations } from "@kilocode/app-builder-db";
+import { runMigrations, createDatabase } from "@kilocode/app-builder-db";
 import { getDb } from "./index";
+import * as schema from "./schema";
 
 // Only run migrations if database credentials are available
 const dbUrl = process.env.DB_URL;
@@ -25,6 +26,14 @@ if (!isSqlite && !dbToken) {
 
 console.log("Running database migrations...");
 
-const db = getDb();
+// Try to get existing db, or create new one
+let db = getDb();
+
+// If db is null (build time), create a new instance for migrations
+if (!db) {
+  console.log("Creating new database instance for migrations...");
+  db = createDatabase(schema, { url: dbUrl });
+}
+
 await runMigrations(db, {}, { migrationsFolder: "./src/db/migrations" });
 console.log("Migrations completed");
