@@ -12,10 +12,7 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Generate database migrations
-RUN bun run db:generate
-
-# Build the application
+# Build the application (without running migrations that need DB credentials)
 RUN bun run build
 
 # Production stage
@@ -31,6 +28,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
 # Set environment variables
 ENV NODE_ENV=production

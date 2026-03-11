@@ -9,17 +9,19 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DB_URL=${DB_URL:-file:./data.db}
+      - DB_URL=${DB_URL:-file:./data/streamray.db}
       - DB_TOKEN=${DB_TOKEN:-}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - streamray-network
 
   # Optional: PostgreSQL database for production
   # Uncomment to use PostgreSQL instead of SQLite
@@ -32,6 +34,12 @@ services:
   #   volumes:
   #     - postgres_data:/var/lib/postgresql/data
   #   restart: unless-stopped
+  #   networks:
+  #     - streamray-network
+
+networks:
+  streamray-network:
+    driver: bridge
 
 # volumes:
 #   postgres_data:
