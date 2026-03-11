@@ -30,6 +30,7 @@ A full-featured admin platform for managing models, studios, and content with ro
 - [x] **Content Types**: Extended schema with video, audio, cam_group, private_show, gallery
 - [x] **Model Settings**: Content types enabled, pricing, visibility, tips configuration
 - [x] **Studio Model Settings**: Revenue share, permissions per model
+- [x] **Email/SMTP Support**: Configurable SMTP with welcome emails, approval notifications, content notifications
 
 ## Current Structure
 
@@ -107,3 +108,4 @@ docker-compose up -d
 | 2024 | Admin platform - auth, dashboards, Docker deployment |
 | 2026-02 | Fixed build failure - lazy database initialization for Cloudflare deployment |
 | 2026-03 | Added fan dashboard, model settings, extended content types |
+| 2026-03 | Added email/SMTP support with notification templates |
