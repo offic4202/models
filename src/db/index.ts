@@ -3,9 +3,26 @@ import * as schema from "./schema";
 
 let dbInstance: ReturnType<typeof createDatabase> | null = null;
 
-// Lazy initialization - only creates database connection when needed
-// This prevents build failures when DB_URL/DB_TOKEN aren't set during build
+// Check if we're in a build/generation context
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                    process.env.NEXT_PHASE === 'phase-development-build' ||
+                    !process.env.DB_URL;
+
+console.log("DB Module loaded, build time check:", { 
+  NEXT_PHASE: process.env.NEXT_PHASE, 
+  isBuildTime,
+  hasDBUrl: !!process.env.DB_URL 
+});
+
+// Lazy initialization - only creates database connection when actually needed at runtime
 export function getDb() {
+  // Skip initialization during build time
+  if (isBuildTime) {
+    console.log("Skipping database initialization during build");
+    // Return a mock db object for build time to prevent crashes
+    return null;
+  }
+
   if (!dbInstance) {
     // Use absolute path for Docker
     const dbUrl = process.env.DB_URL || process.env.DATABASE_URL || "file:./data/streamray.db";
@@ -33,10 +50,17 @@ export function getDb() {
 }
 
 // Export db as a convenience - uses lazy initialization internally
-// This object delegates to the actual database at runtime
-export const db = new Proxy({} as ReturnType<typeof createDatabase>, {
+// Returns null during build time to prevent build failures
+export const db = new Proxy({} as ReturnType<typeof createDatabase> | null, {
   get(_, prop) {
+    // During build time, return undefined for any property access
+    if (isBuildTime) {
+      return undefined;
+    }
     const database = getDb();
+    if (!database) {
+      return undefined;
+    }
     return database[prop as keyof typeof database];
   }
 });
