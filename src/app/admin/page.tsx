@@ -27,7 +27,7 @@ interface PendingItem {
 export default function AdminPanel() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<"approvals" | "users" | "studios" | "models">("approvals");
+  const [activeTab, setActiveTab] = useState<"approvals" | "users" | "studios" | "models" | "settings">("approvals");
   const [pendingItems, setPendingItems] = useState<{
     pendingStudios: any[];
     pendingModels: any[];
@@ -37,6 +37,29 @@ export default function AdminPanel() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  
+  // Settings state
+  const [settings, setSettings] = useState({
+    siteName: "",
+    siteDescription: "",
+    googleAnalyticsId: "",
+    googleAdsenseClientId: "",
+    googleAdsenseAdSlot: "",
+    privacyStatement: "",
+    termsOfService: "",
+    uploadMaxSize: "100",
+    storageType: "local",
+    ftpHost: "",
+    ftpPort: "21",
+    ftpUsername: "",
+    ftpPassword: "",
+    ftpPath: "/public_html/uploads",
+    s3Bucket: "",
+    s3Region: "us-east-1",
+    s3AccessKey: "",
+    s3SecretKey: "",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -94,9 +117,50 @@ export default function AdminPanel() {
     }
   }
 
+  async function loadSettings() {
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/settings", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSettings(prev => ({ ...prev, ...data.settings }));
+      }
+    } catch (error) {
+      console.error("Load settings error:", error);
+    }
+  }
+
+  async function saveSettings() {
+    setSavingSettings(true);
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const settingsList = Object.entries(settings).map(([key, value]) => ({ key, value }));
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ settings: settingsList }),
+      });
+      if (res.ok) {
+        alert("Settings saved successfully!");
+      }
+    } catch (error) {
+      console.error("Save settings error:", error);
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "users") {
       loadUsers();
+    }
+    if (activeTab === "settings") {
+      loadSettings();
     }
   }, [activeTab]);
 
@@ -203,6 +267,16 @@ export default function AdminPanel() {
             }`}
           >
             Models
+          </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-6 py-3 rounded-lg font-medium ${
+              activeTab === "settings"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            Settings
           </button>
         </div>
 
@@ -431,6 +505,225 @@ export default function AdminPanel() {
         {activeTab === "models" && (
           <div className="text-center py-12 text-gray-400">
             <p className="text-xl">Model management coming soon</p>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="space-y-8">
+            {/* Site Settings */}
+            <section className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Site Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Site Name</label>
+                  <input
+                    type="text"
+                    value={settings.siteName}
+                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Max Upload Size (MB)</label>
+                  <input
+                    type="number"
+                    value={settings.uploadMaxSize}
+                    onChange={(e) => setSettings({ ...settings, uploadMaxSize: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-400 mb-1">Site Description</label>
+                  <textarea
+                    value={settings.siteDescription}
+                    onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
+                    rows={3}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Analytics & Monetization */}
+            <section className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Analytics & Monetization</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Google Analytics ID</label>
+                  <input
+                    type="text"
+                    placeholder="G-XXXXXXXXXX"
+                    value={settings.googleAnalyticsId}
+                    onChange={(e) => setSettings({ ...settings, googleAnalyticsId: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Google AdSense Client ID</label>
+                  <input
+                    type="text"
+                    placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                    value={settings.googleAdsenseClientId}
+                    onChange={(e) => setSettings({ ...settings, googleAdsenseClientId: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Google AdSense Ad Slot</label>
+                  <input
+                    type="text"
+                    placeholder="1234567890"
+                    value={settings.googleAdsenseAdSlot}
+                    onChange={(e) => setSettings({ ...settings, googleAdsenseAdSlot: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* External Storage */}
+            <section className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">External Storage Configuration</h2>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-400 mb-2">Storage Type</label>
+                <select
+                  value={settings.storageType}
+                  onChange={(e) => setSettings({ ...settings, storageType: e.target.value })}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                >
+                  <option value="local">Local Storage (Default)</option>
+                  <option value="ftp">FTP Server</option>
+                  <option value="s3">Amazon S3</option>
+                </select>
+              </div>
+              
+              {settings.storageType === "ftp" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">FTP Host</label>
+                    <input
+                      type="text"
+                      value={settings.ftpHost}
+                      onChange={(e) => setSettings({ ...settings, ftpHost: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">FTP Port</label>
+                    <input
+                      type="text"
+                      value={settings.ftpPort}
+                      onChange={(e) => setSettings({ ...settings, ftpPort: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">FTP Username</label>
+                    <input
+                      type="text"
+                      value={settings.ftpUsername}
+                      onChange={(e) => setSettings({ ...settings, ftpUsername: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">FTP Password</label>
+                    <input
+                      type="password"
+                      value={settings.ftpPassword}
+                      onChange={(e) => setSettings({ ...settings, ftpPassword: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-gray-400 mb-1">FTP Path</label>
+                    <input
+                      type="text"
+                      value={settings.ftpPath}
+                      onChange={(e) => setSettings({ ...settings, ftpPath: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {settings.storageType === "s3" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">S3 Bucket Name</label>
+                    <input
+                      type="text"
+                      value={settings.s3Bucket}
+                      onChange={(e) => setSettings({ ...settings, s3Bucket: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">S3 Region</label>
+                    <input
+                      type="text"
+                      value={settings.s3Region}
+                      onChange={(e) => setSettings({ ...settings, s3Region: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">S3 Access Key</label>
+                    <input
+                      type="text"
+                      value={settings.s3AccessKey}
+                      onChange={(e) => setSettings({ ...settings, s3AccessKey: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">S3 Secret Key</label>
+                    <input
+                      type="password"
+                      value={settings.s3SecretKey}
+                      onChange={(e) => setSettings({ ...settings, s3SecretKey: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Privacy & Legal */}
+            <section className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Privacy & Legal</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Privacy Statement</label>
+                  <textarea
+                    value={settings.privacyStatement}
+                    onChange={(e) => setSettings({ ...settings, privacyStatement: e.target.value })}
+                    rows={6}
+                    placeholder="Enter your privacy statement here..."
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Terms of Service</label>
+                  <textarea
+                    value={settings.termsOfService}
+                    onChange={(e) => setSettings({ ...settings, termsOfService: e.target.value })}
+                    rows={6}
+                    placeholder="Enter your terms of service here..."
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <button
+              onClick={saveSettings}
+              disabled={savingSettings}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg"
+            >
+              {savingSettings ? "Saving..." : "Save Settings"}
+            </button>
           </div>
         )}
       </div>

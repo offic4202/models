@@ -370,3 +370,14 @@ export const scheduledShowsRelations = relations(scheduledShows, ({ one }) => ({
     references: [models.id],
   }),
 }));
+
+// Settings table for site configuration
+export const settings = sqliteTable("settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(() => new Date()),
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;
