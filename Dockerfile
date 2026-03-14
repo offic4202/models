@@ -43,7 +43,7 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start the application - run migrations first, then start
-CMD ["sh", "-c", "bun run db:migrate && bun run start"]
+CMD ["sh", "-c", "bun run db:migrate && bun --bun run start"]
 
 # Switch to non-root user
 USER nextjs
