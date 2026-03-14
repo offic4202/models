@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
     const userModels = await db.select().from(models);
 
     // Attach related data
-    const usersWithRelations = allUsers.map(u => ({
+    const usersWithRelations = allUsers.map((u: { id: number }) => ({
       ...u,
-      studio: userStudios.find(s => s.ownerId === u.id),
-      modelProfile: userModels.find(m => m.userId === u.id),
+      studio: userStudios.find((s: { ownerId: number }) => s.ownerId === u.id),
+      modelProfile: userModels.find((m: { userId: number }) => m.userId === u.id),
     }));
 
     return NextResponse.json({ users: usersWithRelations });
