@@ -1,7 +1,8 @@
-import { createDatabase, type Database } from "@kilocode/app-builder-db";
+import { createDatabase } from "@kilocode/app-builder-db";
+import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
 import * as schema from "./schema";
 
-let dbInstance: Database | null = null;
+let dbInstance: SqliteRemoteDatabase<typeof schema> | null = null;
 
 // Check if we're in a build/generation context
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
@@ -15,7 +16,7 @@ console.log("DB Module loaded, build time check:", {
 });
 
 // Lazy initialization - only creates database connection when actually needed at runtime
-export function getDb(): Database | null {
+export function getDb(): SqliteRemoteDatabase<typeof schema> | null {
   // Skip initialization during build time
   if (isBuildTime) {
     console.log("Skipping database initialization during build");
@@ -50,9 +51,9 @@ export function getDb(): Database | null {
 }
 
 // Type for the database export that TypeScript understands
-export type DbType = Database;
+export type DbType = SqliteRemoteDatabase<typeof schema>;
 
 // Export db for direct usage - must be typed properly for TypeScript
 // This allows imports like: import { db } from "@/db"; db.select()
 // At runtime, getDb() will return the actual database or null during build
-export const db: Database = null as unknown as Database;
+export const db: SqliteRemoteDatabase<typeof schema> = null as unknown as SqliteRemoteDatabase<typeof schema>;

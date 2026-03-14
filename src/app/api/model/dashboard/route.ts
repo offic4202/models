@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
       .limit(10);
 
     const followUsers = await db.select().from(users);
-    const recentFollowers = recentFollows.map(f => ({
+    const recentFollowers = recentFollows.map((f: { fanId: number }) => ({
       ...f,
-      fan: followUsers.find(u => u.id === f.fanId),
+      fan: followUsers.find((u: { id: number }) => u.id === f.fanId),
     }));
 
     return NextResponse.json({
