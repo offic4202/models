@@ -1,7 +1,7 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import * as schema from "./schema";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 import path from "path";
 import fs from "fs";
 
@@ -20,7 +20,6 @@ if (!fs.existsSync(dbDir)) {
 console.log("Initializing database at:", dbPath);
 
 const sqlite = new Database(dbPath);
-sqlite.pragma("journal_mode = WAL");
 
 export const db = drizzle(sqlite);
 
