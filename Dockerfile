@@ -30,6 +30,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/bun.lock ./
+COPY --from=builder --chown=nextjs:nodejs /app/src/db ./src/db
 
 # Install production dependencies
 RUN bun install --frozen-lockfile
