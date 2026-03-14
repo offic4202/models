@@ -1,59 +1,41 @@
-import { createDatabase } from "@kilocode/app-builder-db";
-import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "./schema";
+import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs";
 
-let dbInstance: SqliteRemoteDatabase<typeof schema> | null = null;
+const dbUrl = process.env.DB_URL || "file:./data/streamray.db";
 
-// Check if we're in a build/generation context
-const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
-                    process.env.NEXT_PHASE === 'phase-development-build' ||
-                    !process.env.DB_URL;
-
-console.log("DB Module loaded, build time check:", { 
-  NEXT_PHASE: process.env.NEXT_PHASE, 
-  isBuildTime,
-  hasDBUrl: !!process.env.DB_URL 
-});
-
-// Lazy initialization - only creates database connection when actually needed at runtime
-export function getDb(): SqliteRemoteDatabase<typeof schema> | null {
-  // Skip initialization during build time
-  if (isBuildTime) {
-    console.log("Skipping database initialization during build");
-    // Return null during build to allow type checking to pass
-    return null;
-  }
-
-  if (!dbInstance) {
-    // Use absolute path for Docker
-    const dbUrl = process.env.DB_URL || process.env.DATABASE_URL || "file:./data/streamray.db";
-    
-    // Convert relative path to absolute path if needed
-    let finalUrl = dbUrl;
-    if (dbUrl.startsWith("file:")) {
-      const filePath = dbUrl.replace("file:", "");
-      if (!filePath.startsWith("/")) {
-        // Relative path - make it absolute to /app/data
-        finalUrl = `file:/app/data/streamray.db`;
-      }
-    }
-    
-    console.log("Initializing database with URL:", finalUrl);
-    
-    // Create database with schema
-    dbInstance = createDatabase(schema, {
-      url: finalUrl,
-    });
-    
-    console.log("Database initialized successfully");
-  }
-  return dbInstance;
+let dbPath = dbUrl.replace("file:", "");
+if (!dbPath.startsWith("/")) {
+  dbPath = path.join(process.cwd(), dbPath);
 }
 
-// Type for the database export that TypeScript understands
-export type DbType = SqliteRemoteDatabase<typeof schema>;
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
-// Export db for direct usage - must be typed properly for TypeScript
-// This allows imports like: import { db } from "@/db"; db.select()
-// At runtime, getDb() will return the actual database or null during build
-export const db: SqliteRemoteDatabase<typeof schema> = null as unknown as SqliteRemoteDatabase<typeof schema>;
+console.log("Initializing database at:", dbPath);
+
+const sqlite = new Database(dbPath);
+sqlite.pragma("journal_mode = WAL");
+
+export const db = drizzle(sqlite);
+
+async function runMigrations() {
+  console.log("Running migrations...");
+  try {
+    await migrate(db, { migrationsFolder: "./src/db/migrations" });
+    console.log("Migrations completed successfully");
+  } catch (error) {
+    console.error("Migration error:", error);
+  }
+}
+
+runMigrations().then(() => {
+  console.log("Database ready");
+});
+
+export type DbType = typeof db;
