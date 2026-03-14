@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       pendingStudios,
       pendingModels,
       pendingContent,
-      pendingUsers: pendingUsers.filter(u => u.role !== "fan"),
+      pendingUsers: pendingUsers.filter((u: { role: string }) => u.role !== "fan"),
     });
   } catch (error) {
     console.error("Approvals error:", error);
