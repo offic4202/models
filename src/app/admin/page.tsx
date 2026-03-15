@@ -35,8 +35,15 @@ export default function AdminPanel() {
     pendingUsers: any[];
   } | null>(null);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allStudios, setAllStudios] = useState<any[]>([]);
+  const [allModels, setAllModels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  
+  // Edit modal state
+  const [editingItem, setEditingItem] = useState<{type: string; id: number; data: any} | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingEdit, setSavingEdit] = useState(false);
   
   // Settings state
   const [settings, setSettings] = useState({
@@ -155,9 +162,106 @@ export default function AdminPanel() {
     }
   }
 
+  async function loadStudios() {
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/studios", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllStudios(data.studios);
+      }
+    } catch (error) {
+      console.error("Load studios error:", error);
+    }
+  }
+
+  async function loadModels() {
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/models", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllModels(data.models);
+      }
+    } catch (error) {
+      console.error("Load models error:", error);
+    }
+  }
+
+  function openEdit(type: string, item: any) {
+    setEditingItem({ type, id: item.id, data: item });
+    if (type === "user") {
+      setEditForm({ name: item.name, email: item.email, isActive: item.isActive, isVerified: item.isVerified });
+    } else if (type === "studio") {
+      setEditForm({ name: item.name, description: item.description, isApproved: item.isApproved, approvalStatus: item.approvalStatus });
+    } else if (type === "model") {
+      setEditForm({ stageName: item.stageName, bio: item.bio, isApproved: item.isApproved, approvalStatus: item.approvalStatus });
+    }
+  }
+
+  async function saveEdit() {
+    setSavingEdit(true);
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/edit", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: editingItem?.type, id: editingItem?.id, data: editForm }),
+      });
+      if (res.ok) {
+        setEditingItem(null);
+        if (editingItem?.type === "user") loadUsers();
+        else if (editingItem?.type === "studio") loadStudios();
+        else if (editingItem?.type === "model") loadModels();
+      }
+    } catch (error) {
+      console.error("Save edit error:", error);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleDelete(type: string, id: number) {
+    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) return;
+    setActionLoading(id);
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/edit", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type, id }),
+      });
+      if (res.ok) {
+        if (type === "user") loadUsers();
+        else if (type === "studio") loadStudios();
+        else if (type === "model") loadModels();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "users") {
       loadUsers();
+    }
+    if (activeTab === "studios") {
+      loadStudios();
+    }
+    if (activeTab === "models") {
+      loadModels();
     }
     if (activeTab === "settings") {
       loadSettings();
@@ -496,15 +600,108 @@ export default function AdminPanel() {
 
         {/* Studios Tab */}
         {activeTab === "studios" && (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-xl">Studio management coming soon</p>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">All Studios</h2>
+            {allStudios.length === 0 ? (
+              <p className="text-gray-400">No studios found</p>
+            ) : (
+              <div className="grid gap-4">
+                {allStudios.map((studio) => (
+                  <div key={studio.id} className="bg-gray-800 rounded-lg p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium">{studio.name}</h3>
+                        <p className="text-gray-400 text-sm">{studio.description}</p>
+                        <div className="mt-2 flex gap-2">
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            studio.approvalStatus === 'approved' ? 'bg-green-600' : 
+                            studio.approvalStatus === 'rejected' ? 'bg-red-600' : 'bg-yellow-600'
+                          }`}>
+                            {studio.approvalStatus}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded ${studio.isApproved ? 'bg-green-600' : 'bg-red-600'}`}>
+                            {studio.isApproved ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-xs mt-2">
+                          Created: {new Date(studio.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEdit("studio", studio)}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete("studio", studio.id)}
+                          disabled={actionLoading === studio.id}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Models Tab */}
         {activeTab === "models" && (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-xl">Model management coming soon</p>
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">All Models</h2>
+            {allModels.length === 0 ? (
+              <p className="text-gray-400">No models found</p>
+            ) : (
+              <div className="grid gap-4">
+                {allModels.map((model) => (
+                  <div key={model.id} className="bg-gray-800 rounded-lg p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium">{model.stageName}</h3>
+                        <p className="text-gray-400 text-sm">{model.bio}</p>
+                        {model.user && (
+                          <p className="text-gray-500 text-sm">Email: {model.user.email}</p>
+                        )}
+                        <div className="mt-2 flex gap-2">
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            model.approvalStatus === 'approved' ? 'bg-green-600' : 
+                            model.approvalStatus === 'rejected' ? 'bg-red-600' : 'bg-yellow-600'
+                          }`}>
+                            {model.approvalStatus}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded ${model.isApproved ? 'bg-green-600' : 'bg-red-600'}`}>
+                            {model.isApproved ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        <p className="text-gray-500 text-xs mt-2">
+                          Created: {new Date(model.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEdit("model", model)}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete("model", model.id)}
+                          disabled={actionLoading === model.id}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -724,6 +921,164 @@ export default function AdminPanel() {
             >
               {savingSettings ? "Saving..." : "Save Settings"}
             </button>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {editingItem && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold mb-4">
+                Edit {editingItem.type.charAt(0).toUpperCase() + editingItem.type.slice(1)}
+              </h2>
+              
+              {editingItem.type === "user" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name || ""}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editForm.email || ""}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isActive}
+                        onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>Active</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editForm.isVerified}
+                        onChange={(e) => setEditForm({ ...editForm, isVerified: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span>Verified</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {editingItem.type === "studio" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Studio Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name || ""}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Description</label>
+                    <textarea
+                      value={editForm.description || ""}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      rows={3}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Status</label>
+                    <select
+                      value={editForm.approvalStatus}
+                      onChange={(e) => setEditForm({ ...editForm, approvalStatus: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={editForm.isApproved}
+                      onChange={(e) => setEditForm({ ...editForm, isApproved: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <span>Approved</span>
+                  </label>
+                </div>
+              )}
+
+              {editingItem.type === "model" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Stage Name</label>
+                    <input
+                      type="text"
+                      value={editForm.stageName || ""}
+                      onChange={(e) => setEditForm({ ...editForm, stageName: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Bio</label>
+                    <textarea
+                      value={editForm.bio || ""}
+                      onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                      rows={3}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Status</label>
+                    <select
+                      value={editForm.approvalStatus}
+                      onChange={(e) => setEditForm({ ...editForm, approvalStatus: e.target.value })}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={editForm.isApproved}
+                      onChange={(e) => setEditForm({ ...editForm, isApproved: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <span>Approved</span>
+                  </label>
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={saveEdit}
+                  disabled={savingEdit}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white py-2 rounded-lg"
+                >
+                  {savingEdit ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
