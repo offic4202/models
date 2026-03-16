@@ -76,7 +76,9 @@ export const models = sqliteTable("models", {
   studioId: integer("studio_id").references(() => studios.id),
   stageName: text("stage_name").notNull(),
   bio: text("bio"),
-  birthday: integer("birthday", { mode: "timestamp" }),
+  avatar: text("avatar"),
+  category: text("category"),
+  location: text("location"),
   stats: text("stats"), // JSON string for stats
   isApproved: integer("is_approved", { mode: "boolean" }).notNull().default(false),
   approvalStatus: text("approval_status", { enum: [ApprovalStatus.PENDING, ApprovalStatus.APPROVED, ApprovalStatus.REJECTED] }).default(ApprovalStatus.PENDING),

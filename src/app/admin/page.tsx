@@ -45,6 +45,20 @@ export default function AdminPanel() {
   const [editForm, setEditForm] = useState<any>({});
   const [savingEdit, setSavingEdit] = useState(false);
   
+  // Create model modal state
+  const [showCreateModel, setShowCreateModel] = useState(false);
+  const [createModelForm, setCreateModelForm] = useState({
+    email: "",
+    password: "",
+    name: "",
+    stageName: "",
+    bio: "",
+    category: "Fashion",
+    location: "",
+    avatar: "",
+  });
+  const [creatingModel, setCreatingModel] = useState(false);
+  
   // Settings state
   const [settings, setSettings] = useState({
     siteName: "",
@@ -250,6 +264,43 @@ export default function AdminPanel() {
       console.error("Delete error:", error);
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  async function handleCreateModel() {
+    setCreatingModel(true);
+    try {
+      const token = document.cookie.match(/auth-token=([^;]+)/)?.[1];
+      const res = await fetch("/api/admin/create-model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(createModelForm),
+      });
+      if (res.ok) {
+        alert("Model created successfully!");
+        setShowCreateModel(false);
+        setCreateModelForm({
+          email: "",
+          password: "",
+          name: "",
+          stageName: "",
+          bio: "",
+          category: "Fashion",
+          location: "",
+          avatar: "",
+        });
+        loadModels();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to create model");
+      }
+    } catch (error) {
+      console.error("Create model error:", error);
+    } finally {
+      setCreatingModel(false);
     }
   }
 
@@ -653,7 +704,15 @@ export default function AdminPanel() {
         {/* Models Tab */}
         {activeTab === "models" && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">All Models</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">All Models</h2>
+              <button
+                onClick={() => setShowCreateModel(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+              >
+                + Create Model
+              </button>
+            </div>
             {allModels.length === 0 ? (
               <p className="text-gray-400">No models found</p>
             ) : (
@@ -1073,6 +1132,117 @@ export default function AdminPanel() {
                 </button>
                 <button
                   onClick={() => setEditingItem(null)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Model Modal */}
+        {showCreateModel && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold mb-4">Create New Model</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={createModelForm.email}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, email: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Password *</label>
+                  <input
+                    type="password"
+                    value={createModelForm.password}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, password: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Display Name</label>
+                  <input
+                    type="text"
+                    value={createModelForm.name}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, name: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Stage Name *</label>
+                  <input
+                    type="text"
+                    value={createModelForm.stageName}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, stageName: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Bio</label>
+                  <textarea
+                    value={createModelForm.bio}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, bio: e.target.value })}
+                    rows={3}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Category</label>
+                  <select
+                    value={createModelForm.category}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, category: e.target.value })}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  >
+                    <option value="Fashion">Fashion</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Runway">Runway</option>
+                    <option value="Print">Print</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Plus Size">Plus Size</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={createModelForm.location}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, location: e.target.value })}
+                    placeholder="e.g., Lagos, Nigeria"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Avatar URL</label>
+                  <input
+                    type="text"
+                    value={createModelForm.avatar}
+                    onChange={(e) => setCreateModelForm({ ...createModelForm, avatar: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleCreateModel}
+                  disabled={creatingModel}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white py-2 rounded-lg"
+                >
+                  {creatingModel ? "Creating..." : "Create Model"}
+                </button>
+                <button
+                  onClick={() => setShowCreateModel(false)}
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg"
                 >
                   Cancel
